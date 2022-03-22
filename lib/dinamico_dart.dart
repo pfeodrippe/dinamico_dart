@@ -11,7 +11,7 @@ import 'package:json_dynamic_widget_plugin_svg/json_dynamic_widget_plugin_svg.da
 
 class Dinamico {
   static final Map<String, StreamController<http.Response>>
-      _pathToStreamController = {};
+      _urlToStreamController = {};
 
   static register(
       JsonWidgetRegistry registry, String host, Map identifierToAction) {
@@ -38,6 +38,11 @@ class Dinamico {
               },
               body: json.encode(args?[0]),
             );
+
+            if (response.statusCode >= 300) {
+              throw Exception(
+                  "Failure when processing `httpAction`: $response");
+            }
 
             if (response.body == "") {
               return;
@@ -77,19 +82,19 @@ class Dinamico {
     );
   }
 
-  static final streamFunction = ((path) {
+  static final streamFunction = ((url) {
     late final StreamController<http.Response> controller;
     late http.Response _lastResponse;
     bool _hasLastResponse = false;
 
-    if (_pathToStreamController[path] != null) {
-      _pathToStreamController[path]?.close();
+    if (_urlToStreamController[url] != null) {
+      _urlToStreamController[url]?.close();
     }
 
     controller = StreamController<http.Response>(
       onListen: () async {
         while (!controller.isClosed) {
-          var response = await http.get(Uri.parse(path));
+          var response = await http.get(Uri.parse(url));
           if (!_hasLastResponse || _lastResponse.body != response.body) {
             if (!controller.isClosed) {
               controller.add(response);
@@ -102,11 +107,11 @@ class Dinamico {
       },
     );
 
-    _pathToStreamController[path] = controller;
+    _urlToStreamController[url] = controller;
     return controller.stream;
   });
 
-  static Widget build(BuildContext context, String path) {
+  static Widget build(BuildContext context, String url) {
     return StreamBuilder(
       builder: (context, AsyncSnapshot<http.Response> snapshot) {
         var body = snapshot.data?.body;
@@ -132,7 +137,7 @@ class Dinamico {
           );
         }
       },
-      stream: streamFunction(path),
+      stream: streamFunction(url),
     );
   }
 }

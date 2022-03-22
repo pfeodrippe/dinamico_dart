@@ -13,7 +13,8 @@ class Dinamico {
   static final Map<String, StreamController<http.Response>>
       _pathToStreamController = {};
 
-  Dinamico(JsonWidgetRegistry registry, String host, Map identifierToAction) {
+  static register(
+      JsonWidgetRegistry registry, String host, Map identifierToAction) {
     WidgetsFlutterBinding.ensureInitialized();
     JsonMaterialIconsPlugin.bind(registry);
     JsonSvgPlugin.bind(registry);
@@ -76,7 +77,7 @@ class Dinamico {
     );
   }
 
-  final streamFunction = ((path) {
+  static final streamFunction = ((path) {
     late final StreamController<http.Response> controller;
     late http.Response _lastResponse;
     bool _hasLastResponse = false;
@@ -105,7 +106,7 @@ class Dinamico {
     return controller.stream;
   });
 
-  Widget build(BuildContext context, String path) {
+  static Widget build(BuildContext context, String path) {
     return StreamBuilder(
       builder: (context, AsyncSnapshot<http.Response> snapshot) {
         var body = snapshot.data?.body;
